@@ -1,0 +1,33 @@
+.risk-workspace { min-width: 0; }
+.risk-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 22px 0; }
+.risk-summary-grid .insight-tile strong { font-size: clamp(1.15rem, 1.8vw, 1.65rem); }
+.risk-reference-metrics { margin-top: 20px; }
+.risk-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 22px; }
+.risk-chart { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); }
+.risk-chart h4 { margin: 0 0 6px; color: var(--text); font-size: 1.02rem; }
+.risk-chart-description { font-size: 0.83rem; max-width: none; }
+.risk-bars { display: grid; gap: 18px; margin-top: 20px; }
+.risk-bar-row { display: grid; grid-template-columns: minmax(95px, 1fr) minmax(80px, 1.7fr) auto; gap: 12px; align-items: center; }
+.risk-bar-label { font-size: 0.84rem; color: var(--text); overflow-wrap: anywhere; }
+.risk-bar-track { height: 16px; border-radius: 5px; background: var(--border); overflow: hidden; }
+.risk-bar-fill { display: block; height: 100%; min-width: 0; background: var(--accent-blue); border-radius: inherit; }
+.risk-bar-row strong { min-width: 54px; font-size: 0.88rem; text-align: right; color: var(--text); }
+.risk-bar-row small { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 400; color: var(--muted); }
+.risk-service-chart { margin-top: 22px; }
+.risk-svg-wrap { width: 100%; overflow-x: auto; }
+.risk-svg-wrap svg { display: block; width: 100%; min-width: 500px; max-width: 980px; margin: 0 auto; }
+.risk-gridline { stroke: var(--border); stroke-width: 1; }
+.risk-axis { stroke: var(--muted); stroke-width: 1; }
+.risk-axis-label { fill: var(--muted); font-size: 12px; }
+.risk-axis-title { fill: var(--text); font-size: 13px; }
+.risk-cost-line { fill: none; stroke: var(--accent-blue); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.risk-cost-point { fill: var(--accent-blue); stroke: var(--bg-panel-strong); stroke-width: 2; }
+.risk-chart-table { margin-top: 18px; font-size: 0.82rem; }
+.risk-chart-table summary { display: inline-block; cursor: pointer; border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; color: var(--text); background: var(--bg-panel); }
+.risk-chart-table summary:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 3px; }
+.risk-chart-table[open] summary { margin-bottom: 10px; }
+.risk-chart-table th[scope='row'], .risk-workspace th[scope='row'] { color: var(--text); text-transform: none; letter-spacing: normal; font-size: 0.86rem; font-weight: 500; }
+.risk-table-caption { padding: 8px 0 16px; text-align: left; font-size: 0.83rem; color: var(--muted); caption-side: top; }
+.risk-account-owner { display: block; margin-top: 5px; font-size: 0.75rem; color: var(--muted); }
+@media (max-width: 1080px) { .risk-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .risk-chart-grid { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .risk-summary-grid { grid-template-columns: 1fr; } .risk-chart { padding: 15px; } .risk-bar-row { grid-template-columns: minmax(85px, 1fr) minmax(70px, 1.3fr) auto; gap: 8px; } }

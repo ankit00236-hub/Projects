@@ -1,0 +1,77 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python environments, compiled files, and tool caches
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+coverage/
+.coverage
+htmlcov/
+.vite/
+
+# Local credentials and secrets
+.env
+.env.*
+*.env
+.aws/
+.ssh/
+credentials*.json
+service-account*.json
+*.pem
+*.key
+*.keystore
+
+# Local datasets and trained artifacts (preserve only aggregate reports)
+Data/*
+!Data/processed/
+Data/processed/*
+!Data/processed/service_model_evaluation.json
+!Data/processed/risk_data_audit.json
+*.csv
+*.pkl
+*.pickle
+*.joblib
+*.parquet
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.sqlite
+*.sqlite3
+*.db
+
+# Notebooks may embed private source records in cell outputs
+*.ipynb
+
+# Local scratch directory; application source is in this repository root
+/Plutus/

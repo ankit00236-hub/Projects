@@ -1,0 +1,77 @@
+{
+  "rows_raw": 1139,
+  "rows_clean": 1139,
+  "group_count": 168,
+  "training_rows": 913,
+  "holdout_rows": 226,
+  "seed": 73,
+  "selection": "3-fold grouped CV on training only; separate 20% grouped holdout; promotion requires >2% holdout MAE improvement",
+  "results": {
+    "baseline": {
+      "cv": {
+        "mae_inr": 798.3592717180303,
+        "rmse_inr": 1112.069104272785,
+        "r2": 0.7119253528154905
+      },
+      "fit_seconds": 0.977,
+      "holdout": {
+        "mae_inr": 831.0923729807558,
+        "rmse_inr": 1003.4517523600152,
+        "r2": 0.7797928728214117
+      }
+    },
+    "extra_trees_engineered": {
+      "cv": {
+        "mae_inr": 827.6110017392645,
+        "rmse_inr": 1113.2582888769766,
+        "r2": 0.7044361799139353
+      },
+      "fit_seconds": 0.597
+    },
+    "hist_gradient_engineered": {
+      "cv": {
+        "mae_inr": 834.0590513695578,
+        "rmse_inr": 1136.487945092781,
+        "r2": 0.7122102767925749
+      },
+      "fit_seconds": 4.694
+    },
+    "extra_trees_references": {
+      "cv": {
+        "mae_inr": 725.5279274516124,
+        "rmse_inr": 1051.0286551999434,
+        "r2": 0.7522930010892114
+      },
+      "fit_seconds": 0.82
+    },
+    "hist_gradient_references": {
+      "cv": {
+        "mae_inr": 681.3051588832959,
+        "rmse_inr": 946.4943333076332,
+        "r2": 0.8053436128251364
+      },
+      "fit_seconds": 5.383,
+      "holdout": {
+        "mae_inr": 863.9170822236715,
+        "rmse_inr": 1099.8090353263906,
+        "r2": 0.7354712095112304
+      }
+    }
+  },
+  "selected_candidate": "hist_gradient_references",
+  "promoted": false,
+  "sources": {
+    "service_records": "Existing labels; raw records equal previous cleaned records.",
+    "component_costs": "Cleaned comma-separated numeric prices; joined by brand/model/engine.",
+    "mandatory_service": "Known scheduled costs and labour rates; no service-record target averages.",
+    "excluded": [
+      "car_prices.csv: auction sale prices; incompatible target/currency and geography",
+      "Safercar_data.csv: safety specifications; no service-cost labels",
+      "credit_score_data.csv: credit scores; separate target",
+      "train.csv and test_1.csv: appliance warranty fraud; not automotive maintenance",
+      "sample_submission.csv: placeholder predictions, not labels"
+    ]
+  },
+  "data_sha256": "7b785211082064748502e7fc41d6ac5393e8ca160ba1381042daecfac6840847",
+  "candidate_artifact": "service_cost_model.candidate.pkl"
+}

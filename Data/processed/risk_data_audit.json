@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "path": "Data/Vehicle Maintenance- Service Records.csv",
+      "rows": 1139,
+      "sha256": "7b785211082064748502e7fc41d6ac5393e8ca160ba1381042daecfac6840847"
+    },
+    {
+      "path": "Data/processed/service_records_clean.csv",
+      "rows": 1139,
+      "sha256": "8bd7911242b409648b4db7397e0b59e99a6e014741de6b42e9cf98a417588fcd"
+    },
+    {
+      "path": "Data/credit_score_data.csv",
+      "rows": 10000,
+      "sha256": "3a204de9c1b6537ebcbdc0b83fd18488b2d417bfb94e512e9b7bb76255a4bdb4"
+    },
+    {
+      "path": "Data/processed/credit_score_clean.csv",
+      "rows": 10000,
+      "sha256": "3a204de9c1b6537ebcbdc0b83fd18488b2d417bfb94e512e9b7bb76255a4bdb4"
+    },
+    {
+      "path": "Data/Safercar_data.csv",
+      "rows": 17313,
+      "sha256": "db62cffdad8cf8007c51448700802132ec4ecab7724f6f16e0bc54cf8238a89d"
+    }
+  ],
+  "verification": {
+    "processedServiceMatchesRaw": true,
+    "processedCreditMatchesRaw": true,
+    "creditMetricsMatchRaw": true,
+    "serviceRows": 1139,
+    "creditRows": 10000,
+    "syntheticRowsAdded": 0
+  },
+  "credit": {
+    "summary": {
+      "records": 10000,
+      "averageScore": 670.0,
+      "averageEmi": 69958.89,
+      "stability": {
+        "STABLE": 7086,
+        "FLUCTUATING": 1948,
+        "UNSTABLE": 966
+      }
+    },
+    "insights": {
+      "below600": 1551,
+      "withBounces": 1505,
+      "averageObligationRatio": 52.45,
+      "scoreBands": [
+        {
+          "label": "Below 600",
+          "minInclusive": null,
+          "maxExclusive": 600,
+          "records": 1551,
+          "percentage": 15.51
+        },
+        {
+          "label": "600\u2013699",
+          "minInclusive": 600,
+          "maxExclusive": 700,
+          "records": 4834,
+          "percentage": 48.34
+        },
+        {
+          "label": "700\u2013749",
+          "minInclusive": 700,
+          "maxExclusive": 750,
+          "records": 2437,
+          "percentage": 24.37
+        },
+        {
+          "label": "750 and above",
+          "minInclusive": 750,
+          "maxExclusive": null,
+          "records": 1178,
+          "percentage": 11.78
+        }
+      ],
+      "obligationBands": [
+        {
+          "label": "Below 30%",
+          "minInclusive": 0,
+          "maxExclusive": 30,
+          "records": 2377,
+          "percentage": 23.77
+        },
+        {
+          "label": "30\u201349.99%",
+          "minInclusive": 30,
+          "maxExclusive": 50,
+          "records": 2362,
+          "percentage": 23.62
+        },
+        {
+          "label": "50\u201369.99%",
+          "minInclusive": 50,
+          "maxExclusive": 70,
+          "records": 2313,
+          "percentage": 23.13
+        },
+        {
+          "label": "70% and above",
+          "minInclusive": 70,
+          "maxExclusive": null,
+          "records": 2948,
+          "percentage": 29.48
+        }
+      ],
+      "denominators": {
+        "creditScore": 10000,
+        "eligibleEmi": 10000,
+        "obligationRatio": 10000,
+        "bounceCount": 10000
+      },
+      "missingOrInvalid": {
+        "creditScore": 0,
+        "eligibleEmi": 0,
+        "obligationRatio": 0,
+        "bounceCount": 0
+      },
+      "obligationUnit": "percent",
+      "obligationUnitBasis": "Interpreted as percentage values from the source scale; the CSV does not declare units.",
+      "bandPurpose": "Descriptive dataset groups, not lender approval rules or default probabilities.",
+      "monetarySourceCurrency": null
+    }
+  },
+  "metricDefinitions": {
+    "below600": "Count of finite nonnegative credit_score values strictly below 600; denominator creditScore.",
+    "withBounces": "Count of finite nonnegative bounce_count values greater than zero; denominator bounceCount.",
+    "averageObligationRatio": "Arithmetic mean of finite nonnegative source average_obligation_to_income_ratio values; values retained on the 0\u2013100 percentage scale.",
+    "scoreBands": "Local descriptive intervals [minimum inclusive, maximum exclusive], not a validated default or lender approval model.",
+    "obligationBands": "Local descriptive percentage intervals [minimum inclusive, maximum exclusive], not approval thresholds.",
+    "serviceCosts": "Observed service costs summarized by mileage_range; p90 and median use linear interpolation at (n \u2212 1) \u00d7 percentile.",
+    "missingValues": "Blank, malformed, nonfinite or negative risk values excluded; per-metric denominator and missingOrInvalid count reported."
+  },
+  "safety": {
+    "source": "Data/Safercar_data.csv",
+    "rawRecords": 17313,
+    "records": 17312,
+    "duplicatesRemoved": 1,
+    "ratedRecords": 5484,
+    "unratedRecords": 11828,
+    "missingOverallRatings": 11828,
+    "invalidOverallRatings": 0,
+    "averageOverallStars": 4.61,
+    "starDistribution": [
+      {
+        "stars": 1,
+        "records": 0,
+        "percentage": 0.0
+      },
+      {
+        "stars": 2,
+        "records": 26,
+        "percentage": 0.47
+      },
+      {
+        "stars": 3,
+        "records": 118,
+        "percentage": 2.15
+      },
+      {
+        "stars": 4,
+        "records": 1828,
+        "percentage": 33.33
+      },
+      {
+        "stars": 5,
+        "records": 3512,
+        "percentage": 64.04
+      }
+    ],
+    "makes": 64,
+    "models": 2510,
+    "yearRange": {
+      "min": 1990,
+      "max": 2026
+    },
+    "matchedServiceVehicles": 0,
+    "matchedServiceRecords": 0,
+    "matchFields": [
+      "brand",
+      "model",
+      "make_year"
+    ],
+    "scope": "Source configuration rows; aggregate safety reference only.",
+    "limitations": [
+      "Ratings are not warranty claim outcomes, credit scores, or default probabilities.",
+      "Unrated configurations are excluded from star percentages and averages.",
+      "Body styles and drivetrains are separate observations, not unique vehicles.",
+      "No safety rating is attached to a service vehicle without a matching make, model, and year."
+    ]
+  },
+  "lineage": {
+    "serviceSource": "Data/Vehicle Maintenance- Service Records.csv",
+    "creditSource": "Data/credit_score_data.csv",
+    "safetySource": "Data/Safercar_data.csv",
+    "auditPath": "Data/processed/risk_data_audit.json",
+    "syntheticRecordsAdded": 0,
+    "serviceDisplayCurrency": "INR",
+    "serviceSourceCurrency": null,
+    "creditSourceCurrency": null,
+    "currencyNote": "Local CSVs do not declare currency. INR is the project display convention, not a verified conversion.",
+    "crossDatasetBorrowerJoin": false,
+    "crossDatasetJoinNote": "Service and credit sources have no shared borrower or policy identifiers; aggregate references stay separate."
+  },
+  "excludedSources": [
+    {
+      "path": "Data/car_prices.csv",
+      "reason": "Different vehicle market; no declared monetary currency or borrower/policy linkage. Selling prices not treated as INR loan training targets."
+    },
+    {
+      "path": "Data/train.csv",
+      "reason": "AC/TV appliance warranty fraud labels cannot validate automotive warranty decisions."
+    },
+    {
+      "path": "Data/test_1.csv",
+      "reason": "AC/TV appliance records are not automotive claims and have no fraud labels."
+    },
+    {
+      "path": "Data/sample_submission.csv",
+      "reason": "Competition prediction template, not observed automotive outcomes."
+    }
+  ]
+}
