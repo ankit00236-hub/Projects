@@ -80,4 +80,3 @@ export function Evaluation({ data }) {
     <details><summary>Training comparison and source fingerprint</summary><p>Models were selected using training folds only.</p><ul>{Object.entries(report.candidates).map(([name, value]) => <li key={name}>{label(name)}: mean CV average precision {value.cv_average_precision.toFixed(4)}</li>)}</ul><p className="claims-hash">CSV SHA-256: {report.sha256}</p></details>
   </section>
 }
-

@@ -1,0 +1,2 @@
+# Preserve the supplied CSV bytes and their reproducible SHA-256 fingerprints.
+Data/*.csv -text whitespace=cr-at-eol
