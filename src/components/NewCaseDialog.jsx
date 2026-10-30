@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import data from '../data/trainingData.json'
+import data from '../data/vehicleOptions.json'
 import { componentLabel, currentDate, vehicleLabel } from '../utils/warranty'
 
-export default function NewCaseDialog({ assets, onClose, onSave, onRegister }) {
+export default function NewCaseDialog({ assets, modelData, onClose, onSave, onRegister }) {
   const dialog = useRef(null)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -10,7 +10,7 @@ export default function NewCaseDialog({ assets, onClose, onSave, onRegister }) {
     if (!element.open) element.showModal()
     return () => element.close()
   }, [])
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const asset = assets.find((a) => a.id === form.get('assetId'))
@@ -18,14 +18,16 @@ export default function NewCaseDialog({ assets, onClose, onSave, onRegister }) {
     const mileage = Number(form.get('mileage'))
     if (!asset || !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(mileage) || mileage < 0) { setError('Select a registered vehicle and valid claim details.'); return }
     try {
-      onSave({ id: crypto.randomUUID(), assetId: asset.id, vehicle: componentLabel(`${asset.service.brand} ${asset.service.model}`), owner: asset.owner, claimKey: form.get('component'), claim: componentLabel(form.get('component')), claimDate: form.get('claimDate'), mileage, amount, status: 'Pending', created: new Date().toISOString() })
+      await onSave({ id: crypto.randomUUID(), assetId: asset.id, vehicle: componentLabel(`${asset.service.brand} ${asset.service.model}`), owner: asset.owner, claimKey: form.get('component'), claim: componentLabel(form.get('component')), claimDate: form.get('claimDate'), defect_code: form.get('defect_code') || '', dealer_id: form.get('dealer_id') || '', mileage, amount, status: 'Pending', created: new Date().toISOString() })
       onClose()
     } catch (failure) { setError(failure.message || 'Unable to save the case.') }
   }
   return <dialog aria-labelledby="case-title" ref={dialog} onCancel={onClose} className="case-dialog">
-    {!assets.length ? <div className="page-stack"><h2 id="case-title">Register a vehicle first</h2><p className="subcopy">Automatic screening needs a shared vehicle record with financing and policy terms.</p><button className="primary-button" onClick={() => { onClose(); onRegister() }}>Open financing registration</button><button className="ghost-button" onClick={onClose}>Cancel</button></div> : <form onSubmit={submit}><h2 id="case-title">New linked warranty case</h2><p className="subcopy">Policy checks and model-based cost checks run automatically after saving. Staff record the final decision.</p><div className="prediction-form">
+    {!assets.length ? <div className="page-stack"><h2 id="case-title">Register a vehicle first</h2><p className="subcopy">Automatic screening needs a shared vehicle record with financing and policy terms.</p><button className="primary-button" onClick={() => { onClose(); onRegister() }}>Open financing registration</button><button className="ghost-button" onClick={onClose}>Cancel</button></div> : <form onSubmit={submit}><h2 id="case-title">New linked warranty case</h2><p className="subcopy">Policy checks run automatically. The fraud model also runs when a supported defect and dealer are supplied. Staff record the final decision.</p><div className="prediction-form">
       <label>Registered vehicle<select name="assetId">{assets.map((a) => <option key={a.id} value={a.id}>{vehicleLabel(a)} · {a.owner}</option>)}</select></label>
       <label>Claim component<select name="component">{data.flags.map((key) => <option key={key} value={key}>{componentLabel(key)}</option>)}</select></label>
+      <label>Model defect (optional)<select name="defect_code"><option value="">Not mapped — skip model</option>{modelData?.defects.map((defect) => <option key={defect}>{defect}</option>)}</select></label>
+      <label>Dealer for model (optional)<select name="dealer_id"><option value="">Other / not recorded — skip model</option>{modelData?.dealers.map((dealer) => <option key={dealer}>{dealer}</option>)}</select></label>
       <label>Claim date<input required type="date" name="claimDate" defaultValue={currentDate()} /></label>
       <label>Mileage at claim (km)<input required type="number" name="mileage" min="0" step="1" /></label>
       <label>Requested amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required /></label>

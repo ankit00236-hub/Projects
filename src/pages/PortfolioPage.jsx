@@ -1,5 +1,5 @@
-import data from '../data/trainingData.json'
-import { rupees, title } from '../utils/actions'
-export default function PortfolioPage() {
-return (        <article className="panel panel-large bottom-panel" id="portfolio"><div className="panel-header"><div><p className="eyebrow">Service training portfolio</p><h3>Costs by model</h3></div></div><div className="table-wrap"><table><thead><tr><th>Model</th><th>Service records</th><th>Average cost (INR)</th></tr></thead><tbody>{data.portfolio.map((p) => <tr key={p.model}><td>{title(p.model)}</td><td>{p.units.toLocaleString('en-IN')}</td><td>{rupees(p.average)}</td></tr>)}</tbody></table></div></article>)
+import { rupees } from '../utils/actions'
+import { financeSummary, vehicleLabel } from '../utils/warranty'
+export default function PortfolioPage({ assets = [], cases = [], onOpenCases, onRegister }) {
+  return <article className="panel panel-large"><div className="panel-header"><div><p className="eyebrow accent">Live registered accounts</p><h3>Vehicle warranty and financing portfolio</h3></div><button className="primary-button" onClick={onRegister}>Register vehicle</button></div><div className="table-wrap"><table><thead><tr><th>Vehicle / owner</th><th>Policy coverage</th><th>Original principal</th><th>Monthly EMI</th><th>Claims</th></tr></thead><tbody>{assets.map((asset) => { const finance = financeSummary(asset); const linked = cases.filter((item) => item.assetId === asset.id); return <tr key={asset.id}><td>{vehicleLabel(asset)}<br />{asset.owner}</td><td>{asset.policy.start} – {asset.policy.end}<br />Limit {rupees(asset.policy.claimLimit)}</td><td>{rupees(finance.principal)}</td><td>{rupees(finance.emi)}</td><td><button className="ghost-button small" onClick={() => onOpenCases(asset.id)}>{linked.length} linked cases</button></td></tr> })}</tbody></table></div>{!assets.length && <p className="empty-state">Register a vehicle to build the shared warranty and financing portfolio.</p>}</article>
 }

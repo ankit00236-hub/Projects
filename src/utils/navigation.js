@@ -1,6 +1,5 @@
-const pages = new Set(['overview', 'warranty', 'financing', 'risk', 'reports', 'notes', 'portfolio'])
+export const pages = ['overview', 'warranty', 'financing', 'risk', 'reports', 'notes', 'portfolio', 'screening', 'claims', 'evaluation']
 export function pageFromHash(hash) {
-  // Older section bookmarks continue to open the corresponding page.
   const page = hash.replace(/^#\/?/, '').split('?')[0]
-  return pages.has(page) ? page : 'overview'
+  return pages.includes(page) ? page : 'overview'
 }

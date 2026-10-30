@@ -1,33 +1,32 @@
+"""Replacement of obsolete service-model tests with claim training checks."""
+import hashlib
 import json
 import unittest
 from pathlib import Path
 import joblib
-import pandas as pd
-from sklearn.base import clone
-from ml.service_features import ServiceFeatures
+from sklearn.model_selection import StratifiedGroupKFold
+from ml.train_claims_model import FEATURES, load_data
 
 ROOT = Path(__file__).resolve().parents[2]
 
-class ServiceFeaturesTests(unittest.TestCase):
-    def setUp(self):
-        self.frame = pd.DataFrame([json.loads((ROOT / 'src/data/trainingData.json').read_text())['initialForm']])
+class ClaimTrainingTests(unittest.TestCase):
+    def test_artifact_and_report_match_source(self):
+        source = ROOT / 'Data/warranty_claims.csv'
+        data = load_data(source)
+        report = json.loads((ROOT / 'Data/processed/claims_model_evaluation.json').read_text())
+        self.assertEqual(report['sha256'], hashlib.sha256(source.read_bytes()).hexdigest())
+        self.assertEqual(report['rows'], len(data))
+        self.assertEqual(report['flagged'], int(data.fraud_flag.sum()))
+        model = joblib.load(ROOT / 'Data/processed/claims_fraud_model.joblib')
+        self.assertEqual(model.feature_names_in_.tolist(), FEATURES)
+        self.assertTrue(set(FEATURES).isdisjoint({'claim_id', 'approved', 'fraud_flag', 'vin_masked'}))
+        self.assertEqual(model.predict_proba(data[FEATURES].head()).shape, (5, 2))
 
-    def test_reference_features_and_no_input_mutation(self):
-        original = self.frame.copy(deep=True)
-        reference = {('honda', 'jazz', 'petrol'): {'cost10k': 2010, 'labour_cost': 690, 'clutch_plate': 2640, 'barke_pad': 2849}}
-        features = clone(ServiceFeatures(reference)).fit_transform(self.frame)
-        self.assertEqual(features['scheduled_cost'].iloc[0], 2010)
-        self.assertEqual(features['interval_deviation'].iloc[0], 1400)
-        pd.testing.assert_frame_equal(original, self.frame)
-        self.assertNotIn('cost', features)
-
-    def test_clean_price_parsing(self):
-        table = pd.read_csv(ROOT / 'Data/processed/component_cost_clean.csv')
-        value = table.loc[table.model == 'fortuner', 'front_windsheild'].iloc[0]
-        self.assertEqual(value, 161993)
-
-    def test_candidate_serialization(self):
-        pipeline = joblib.load(ROOT / 'Data/processed/service_cost_model.candidate.pkl')
-        self.assertGreater(float(pipeline.predict(self.frame)[0]), 0)
-
-if __name__ == '__main__': unittest.main()
+    def test_no_masked_vin_leaks_across_evaluation_partitions(self):
+        data = load_data(ROOT / 'Data/warranty_claims.csv')
+        train, holdout = next(StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=73).split(data[FEATURES], data.fraud_flag, data.vin_masked))
+        self.assertFalse(set(data.vin_masked.iloc[train]) & set(data.vin_masked.iloc[holdout]))
+        self.assertGreater(data.fraud_flag.iloc[holdout].sum(), 0)
+        for fit, validation in StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=42).split(data.iloc[train], data.fraud_flag.iloc[train], data.vin_masked.iloc[train]):
+            self.assertFalse(set(data.vin_masked.iloc[train].iloc[fit]) & set(data.vin_masked.iloc[train].iloc[validation]))
+            self.assertGreater(data.fraud_flag.iloc[train].iloc[validation].sum(), 0)

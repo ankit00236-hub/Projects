@@ -46,14 +46,12 @@ test('entered overdue balance does not change automatic policy screening', () =>
   }
 })
 
-test('risk page includes a zero-baseline INR graph and accessible data tables', () => {
-  const html = render({ assets: [asset], cases })
-  assert.match(html, /<svg[^>]+role="img"[^>]+aria-labelledby=/)
-  assert.match(html, /₹0<\/text>/)
-  assert.match(html, /Average cost \(INR\)/)
-  assert.match(html, /View chart data/)
-  assert.match(html, /5484|5,484/)
-  assert.match(html, /No matching service models were found/)
+test('risk page uses current training claims rather than retired service/credit summaries', () => {
+  const html = render({ assets: [asset], cases, data: { summary: { records: 500, flagged: 13 }, defects: ['Brake_Pad'], records: [{ defect_code: 'Brake_Pad' }] } })
+  assert.match(html, /Historical claims by defect/)
+  assert.match(html, /500 training claims/)
+  assert.match(html, /13 recorded fraud flags/)
+  assert.doesNotMatch(html, /Historical credit reference|Maintenance costs by service interval/)
 })
 
 test('risk page handles an empty workspace without inventing accounts', () => {

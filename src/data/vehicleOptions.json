@@ -1,0 +1,52 @@
+{
+  "initialForm": {
+    "brand": "honda",
+    "model": "jazz",
+    "engine_type": "petrol",
+    "make_year": 2017,
+    "region": "chennai",
+    "mileage_range": 10000,
+    "mileage": 11400,
+    "washer_plug_drain": 0,
+    "dust_and_pollen_filter": 0,
+    "whell_alignment_and_balancing": 1,
+    "air_clean_filter": 0,
+    "fuel_filter": 0,
+    "spark_plug": 0,
+    "brake_fluid": 0,
+    "brake_and_clutch_oil": 0,
+    "transmission_fluid": 0,
+    "brake_pads": 0,
+    "clutch": 0,
+    "coolant": 0
+  },
+  "flags": [
+    "washer_plug_drain",
+    "dust_and_pollen_filter",
+    "whell_alignment_and_balancing",
+    "air_clean_filter",
+    "fuel_filter",
+    "spark_plug",
+    "brake_fluid",
+    "brake_and_clutch_oil",
+    "transmission_fluid",
+    "brake_pads",
+    "clutch",
+    "coolant",
+    "engine_oil",
+    "battery",
+    "electrical_system",
+    "air_conditioning"
+  ],
+  "mileageRanges": [
+    10000,
+    20000,
+    30000,
+    40000,
+    50000,
+    60000,
+    70000,
+    80000,
+    100000
+  ]
+}

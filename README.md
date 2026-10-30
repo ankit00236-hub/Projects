@@ -1,143 +1,96 @@
-# Plutus Auto
+# Integrated Automotive Warranty and Financing Management System
 
-React dashboard backed by a trained service-cost model. All monetary values use INR.
+Plutus Auto connects vehicle registration, warranty policies and claims, financing, portfolio management, reports, and follow-up notes. A fraud-screening model is a supporting feature in the same workflow. The overview is the default page.
+
+## Connected features
+
+- **Overview:** account totals, warranty activity, financed principal, overdue balances, and navigation into the operational workflows.
+- **Vehicle & financing:** register any supported-format vehicle, owner, policy, and loan in one shared record; edit records; calculate EMI, interest and repayments; review obligations and entered overdue balances.
+- **Warranty:** create a case linked to a registered vehicle; check policy dates, mileage, components, claim limits and duplicates; view that vehicle’s financing; record and retain staff decisions.
+- **Model-assisted review:** optionally map a saved case to a supported defect and dealer, run fraud screening automatically, and open model details from the same case. Missing mappings skip the model rather than inventing identifiers. Existing cases can add or update their mappings.
+- **Risk review:** current policy states, model availability, pending claim amounts and loan facts, plus a clearly separate training-data reference.
+- **Portfolio:** registered vehicles with policies, original loan principal, EMI and links to their warranty cases.
+- **Reports:** export linked policy checks, financing facts, staff decisions and experimental model scores, with status filtering. Training-claim exports remain separate.
+- **Desk notes:** save warranty, financing, dealer and general follow-ups with due dates and completion status.
+- **Model tools:** manual screening, searchable/filterable training claims and CSV export, and transparent evaluation. Switching tabs retains current inputs, results and filters; refresh reloads saved account records.
+
+The system links operational records by an explicit vehicle ID, not by similar names or by joining unrelated datasets. Loan facts accompany warranty review; overdue balances and fraud scores do not automatically approve or reject a warranty. The loan planner is a calculation from entered terms, not a trained credit approval model.
+
+## Dataset and model
+
+`Data/warranty_claims.csv` is an unchanged copy of the supplied `dataset (1).csv`: 500 automotive warranty claims, 13 fraud flags, 429 historical approvals, five defects, and five dealers. Repair costs explicitly use INR. The supplied dictionary is preserved in `Data/claims_data_dictionary.csv`; its learner placeholders are source text rather than instructions.
+
+The new claims data replaces the old training datasets and service-cost model. This does **not** remove warranty or financing management. Vehicle entry and policy validation are independent of the fraud-training population, so makes, models, and locations are no longer restricted to old maintenance training combinations. Static component choices are in `src/data/vehicleOptions.json`.
+
+Existing account records in SQLite/PostgreSQL are preserved and are not silently added to training. Training claims have masked VINs and no verified join to operational vehicle records. The app never assigns those rows to registered owners or loan accounts.
 
 ## Run locally
-
-From the `Plutus` directory:
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r backend/requirements.txt
+pip install -r backend/requirements-dev.txt
+python -m ml.train_claims_model
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-In another terminal, from `Plutus`:
+In another terminal:
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the Vite URL. The dev server proxies `/api` requests to port 8000. A production deployment must also route `/api` to the backend and remove the `/api` prefix.
+Open the Vite URL and sign in or register. The frontend proxies `/api` to port 8000. Local development uses `Data/plutus.sqlite3` unless database configuration overrides it. Do not delete this file when replacing training data. Records use account isolation and revision checks to protect against stale saves across devices. Theme preference is browser-local. Existing browser records can be imported into empty account collections from Overview.
 
-The saved scikit-learn model should run with the same package versions used to train it. If loading reports version incompatibility, use the training environment versions or retrain and export using the installed version.
+## Evaluation and limitations
 
-## Data and actions
+The model uses defect, dealer, repair cost and claim month. IDs, approval decisions and the fraud target are excluded from predictors. Masked VINs are used only to group evaluation partitions.
 
-- Vehicle options, years, engines, regions, service intervals, and component flags follow `Data/processed/service_records_clean.csv` and the feature schema in `ml/notebooks/04_data_integration.ipynb`.
-- The model expects lowercase categories: `honda` / `toyota`, `amaze` / `city` / `jazz` / `fortuner`, `petrol` / `diesel`, and `chennai` / `mumbai`. `mileage_range` is the selected service interval; `mileage` is actual mileage.
-- Portfolio costs and service frequencies summarize 1,139 records. Financing statistics summarize 10,000 credit records. These are dataset summaries, not live loan or insurance predictions.
-- New Case creates a warranty case in browser local storage. Status changes persist after refresh. The training datasets do not contain warranty claims or coverage decisions.
-- Review today's queue shows pending cases; View All expands the queue; Open Portfolio scrolls to model costs. Navigation links move to their sections.
-- Export downloads service records; Reports also exports local warranty cases and model summaries. CSV amounts are INR numbers.
-- `src/components/ServiceEstimator.jsx` handles prediction; `NewCaseDialog.jsx` handles case creation; `src/utils/actions.js` contains navigation, export, storage, and currency helpers.
+Three stratified grouped folds within 400 training rows select a candidate by average precision. A separate 100-row grouped holdout contains three flagged claims. The selected random forest has average precision **0.0337**, ROC AUC **0.3643**, and Brier score **0.02955**. The constant-rate baseline has average precision **0.0300** and Brier score **0.02912**. The candidate fails the combined improvement check and misses all three flagged holdout records at a 0.5 threshold.
 
-After changing the processed CSVs, regenerate the dashboard snapshot:
+The final experimental artifact is refit on all 500 rows. Scores for those historical rows are in-sample; holdout metrics belong to the separate evaluation model. There are only 13 positive examples and dataset provenance has not been verified. Scores are uncalibrated and unsuitable for automated claim decisions. Every case requires human review; the app displays this limitation and warns about dates or costs outside the observed range. Better fraud performance needs additional verified labels and independent future-period validation.
+
+Reproduce the model and report with `python -m ml.train_claims_model`. Restart the backend after regeneration. Outputs are `Data/processed/claims_fraud_model.joblib` and `claims_model_evaluation.json`. The CSV and evaluation are committed; the trained binary is generated. Old service-cost routes and obsolete data summaries are not used by the integrated application.
+
+## Checks
 
 ```sh
-python3 scripts/generate_dashboard_data.py
-```
-
-## Reliability and verification
-
-The JavaScript bundle contains only summaries and supported vehicle options. Full service records download on demand from `public/service-records-INR.csv`; regenerate this CSV and the summary together after updating training data.
-
-Warranty cases stay in local browser storage. Corrupt storage produces an error and is preserved instead of silently replaced. Changes from other tabs refresh the queue; a stale save is rejected. Browser storage is not a central database or a backup: export cases before clearing browser data.
-
-Prediction inputs lock during requests to avoid displaying estimates for changed inputs. Requests time out after 15 seconds. The backend validates supported combinations, intervals, binary flags, and finite nonnegative mileage; invalid model outputs return a controlled 503 response. `/health` reports readiness. Runtime dependency versions are pinned to the environment verified with the saved model. Vite preview also proxies `/api` locally.
-
-Run checks from `Plutus`:
-
-```sh
-npm run build
 npm run lint
+npm run build
 npm test
+npm run test:pages
 .venv/bin/python -m unittest discover -s backend/tests -v
 ```
 
-The backend tests require a test client dependency:
+The page smoke check covers all ten management and model routes. API tests include arbitrary vehicle registration, linked case storage, financial facts, accounts, model inference, invalid inputs, source fingerprints and grouped evaluation.
+
+## Browser integration checks
+
+The browser check uses Chrome CDP through Node’s built-in WebSocket. It creates disposable accounts, so run it against a separate database. Start an isolated backend and frontend in separate terminals:
 
 ```sh
-pip install -r backend/requirements-dev.txt
+env DATABASE_URL= POSTGRES_URL= VERCEL= PLUTUS_SQLITE_PATH=/private/tmp/plutus-integrated-check.sqlite3 .venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001
+env PLUTUS_API_TARGET=http://127.0.0.1:8001 npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
-Tests cover real model inference, malformed API inputs, invalid model output, summaries, case corruption, rupee formatting, and CSV escaping.
-
-## Reproducible model improvement experiment
-
-From `Plutus`, run:
+Start Chrome with a temporary profile, then run the check:
 
 ```sh
-.venv/bin/python -m ml.train_service_model
+'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --remote-debugging-port=9222 --user-data-dir=/private/tmp/plutus-tabs-chrome --no-first-run --no-default-browser-check about:blank
+PLUTUS_TEST_URL=http://127.0.0.1:5174 npm run test:browser
 ```
 
-The script cleans raw service records, component prices (including Indian comma-separated numbers), and mandatory-service reference costs. Reference tables join on brand/model/engine and are embedded inside the fitted candidate so prediction does not depend on re-reading those CSVs. The API feature contract stays unchanged.
+It verifies registration, loan/policy/vehicle creation, portfolio-to-warranty links, automatic model checks, saved staff decisions, notes and refresh persistence, all ten routes, mobile containment, model-tab state, search/filter/pagination, filtered CSV contents, browser history, theme persistence, error recovery and sign-out.
 
-Similar records differing only in actual mileage are kept in one evaluation group. Model selection uses three grouped training folds; a separate grouped 20% holdout gates replacement. The baseline is retrained from the current pipeline configuration on the same training partition, rather than comparing against the deployed model that already saw all existing records. Promotion requires more than 2% improvement in holdout MAE. A previous active artifact is preserved before successful promotion.
+## Deployment
 
-Outputs:
+`api/index.py` mounts the complete backend under `/api`. Vercel regenerates the model during the build and packages the new CSV, model, report and vehicle validation options. Existing production account/database configuration is preserved. These changes do not deploy the application.
 
-- `Data/processed/component_cost_clean.csv` and `mandatory_service_clean.csv`: cleaned reference tables.
-- `Data/processed/service_model_evaluation.json`: metrics, selection rules, source audit, and raw-data hash.
-- `Data/processed/service_cost_model.candidate.pkl`: experimental model; the backend continues using `service_cost_model.pkl` unless promotion passes.
+## Demo scenarios
 
-In the first experiment the selected reference-enriched gradient model improved grouped cross-validation MAE (₹798 → ₹681), but worsened separate holdout MAE (₹831 → ₹864). It was **not promoted**. Holdout R² was 0.780 for the baseline versus 0.735 for the candidate. The raw service CSV is identical to the existing 1,139 cleaned rows; no additional labeled service examples were found.
+Overview’s **Add demo examples** button adds six synthetic vehicle/financing/policy accounts, ten linked warranty claims and six follow-ups to the signed-in account. The examples cover all four claim statuses, five model defect categories, expired coverage, excess mileage, an uncovered component and excess amount, duplicate claims, missing model mappings, overdue financing and a zero-interest loan. Notes cover Warranty, Financing, Dealer and General, with open and completed items.
 
-Auction sale prices, safety specifications, credit scores, appliance warranty-fraud data, and submission placeholders are excluded from the maintenance target. Their units, populations, or labels differ. The service dataset contains costs but no explicit currency metadata; the app retains its existing INR assumption, and auction prices are never treated as INR service costs. Scheduled reference costs must be available at prediction time and independent of observed service bills; their provenance should be confirmed before deployment.
+Demo owners and vehicle registrations are visibly labeled; a banner identifies their inclusion, and operational report CSVs carry `demo_record` flags. Demo examples do not enter model training or supply fraud labels. Repeated loading adds only missing demo IDs, preserving both existing records and edits to previously loaded examples. All three collections are added in one transaction.
 
-This evaluation measures unseen service-feature combinations within the current small dataset. It does not establish accuracy for new makes, locations, years, or future bills. Further tuning needs fresh validation data rather than repeated tuning against this holdout. After a model promotion that changes cleaned service records, regenerate frontend data with `python3 scripts/generate_dashboard_data.py` and restart the backend.
-
-## Warranty and financing workspace
-
-The dashboard includes a vehicle loan planner with fixed-rate EMI, total interest, and repayment totals in INR. It is a calculator, not lender approval or a credit-model prediction. Desk Notes tracks warranty, financing, dealer, and general follow-ups with optional due dates, completion, and deletion. Notes are stored locally; damaged storage is preserved, and stale writes from another tab are rejected.
-
-The header's Light/Dark button switches between emerald-and-gold themes and remembers the preference. On first visit the theme follows the operating system. Animated background colours respect reduced-motion preferences. Cases, notes, and theme preferences remain browser-local; this version does not provide centralized account synchronization.
-
-## Separate workspace pages
-
-Navigation now opens one dedicated page at a time:
-
-- `#/overview`: executive summary, case totals, and regional/cost insights.
-- `#/warranty`: claim queue, status management, and service cost estimator.
-- `#/financing`: vehicle loan planner and credit dataset summaries.
-- `#/risk`: exposure indicators and maintenance charts.
-- `#/reports`: CSV exports and filtered warranty reports.
-- `#/notes`: follow-up notes board.
-- `#/portfolio`: model-level service portfolio.
-
-Each page has a separate component in `src/pages`. Shared theme, case storage, and the New Case dialog remain in the app shell. Links work with browser Back/Forward and refresh; hash routing avoids requiring server rewrite configuration. Older section bookmarks still open the corresponding page. Loan planner inputs reset when leaving Financing; saved cases, notes, and theme preferences persist.
-
-## Linked warranty, financing, and automatic screening
-
-1. Open **Financing** and register a vehicle with its owner, registration ID, supported service profile, loan terms, income/other EMI/overdue balance, and entered warranty dates, mileage limit, per-claim limit, and covered components. Records can be edited in the same form.
-2. Use **New case** to select that vehicle, a component, claim date, mileage, and requested INR amount. The owner and vehicle are populated from the shared record. Initial policy failures route the case to Review.
-3. The **Warranty** page checks owner match, inclusive coverage dates, claim mileage, component coverage, per-claim limits, and matching duplicate submissions automatically. Expand a case for individual reasons. Changes to linked terms re-run local checks. Older unlinked cases can be completed using the link form inside their details.
-4. The backend's `POST /assess-warranty` compares the claim amount with the active service-cost model. It flags absolute deviations above 25%, or mileage beyond the observed training range, for cost review. It separately displays mapped clutch/brake-pad prices and scheduled-package references; unmapped prices stay missing rather than zero. At most two requests run together; successful assessments are cached by exact input for the session, cancelled if inputs change, and have a 15-second timeout. **Retry model checks** clears that cache.
-5. **Financing** displays each registered vehicle's EMI, obligation-to-income ratio, entered overdue balance, linked claims, and policy-check attention counts. Its linked-case button opens a filtered Warranty queue. Financing facts are reviewed in parallel and never determine warranty entitlement. The original financed principal is not a remaining repayment balance.
-6. **Risk** charts separate current local cases/accounts from historical service, credit, and safety sources. Zero-baseline service-cost graphs use numeric mileage intervals; credit bands and safety-rating distributions have table alternatives. Model unavailable/checking states and unlinked cases are visible. **Reports** exports the shared vehicle/financing register and cross-referenced claim checks alongside historical summaries.
-
-Policy checks use the terms entered by the user. They do not verify invoices, policy authenticity, identity, fraud, payment settlement, or a lender's decision. No labeled automotive warranty outcomes or shared borrower IDs exist in the CSVs, so the app does not invent a warranty-approval model or join unrelated credit rows to customers. Staff decisions remain explicit and store timestamped local status history. No automatic payment or loan approval is performed. Records remain in this browser rather than a central database.
-
-The earlier reference-enriched model failed the separate holdout test, so the active service model remains unchanged. Cross-reference assessment enhances the workflow around that model instead of claiming improved prediction accuracy.
-
-## Audited risk data
-
-Regenerate dashboard summaries and the audit with:
-
-```sh
-python3 scripts/generate_dashboard_data.py
-```
-
-`Data/processed/risk_data_audit.json` records source hashes, checks against raw and processed data, valid denominators, missing-value counts, unmatched reference rows, and excluded datasets. All 10,000 credit rows reproduce the raw risk summaries: 1,551 scores below 600, 1,505 with recorded payment bounces, and mean obligation-to-income ratio 52.45%. These are descriptive dataset indicators.
-
-The safety reference contains 17,312 unique configurations after removing one exact duplicate, with 5,484 overall-star-rated and 11,828 unrated rows. None match the service vehicle profiles; safety ratings are therefore shown only as a separate reference distribution. The original 1,139 service labels are unchanged. Source CSVs do not explicitly record currency; INR remains the maintenance UI assumption and auction sale prices are excluded.
-
-For a rendering check of all seven pages and linked record fixtures (held only in test memory):
-
-```sh
-npm run test:pages
-```
-
-# Projects
+For local setup, `python scripts/seed_demo_data.py --username YOUR_EXISTING_USERNAME` adds the same examples to one explicitly selected account using the configured database. Dates are relative to the load date in Asia/Kolkata, so policy and follow-up scenarios remain useful.

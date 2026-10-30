@@ -1,52 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import data from '../data/trainingData.json'
-import { assessmentService } from '../utils/warranty'
-
+import { api } from '../utils/api'
 export default function useAssessments(cases, assets) {
   const cache = useRef(new Map())
-  const [responses, setResponses] = useState({})
-  const [attempt, setAttempt] = useState(0)
-  const fingerprint = JSON.stringify(cases.flatMap((item) => {
-    const asset = assets.find((a) => a.id === item.assetId)
-    return asset && Number.isFinite(item.mileage) && data.flags.includes(item.claimKey)
-      ? [{ id: item.id, body: { service: assessmentService(item, asset, data.flags), requested_amount: item.amount } }] : []
-  }))
+  const [responses, setResponses] = useState({}), [attempt, setAttempt] = useState(0)
+  const fingerprint = JSON.stringify(cases.flatMap((item) => assets.some((asset) => asset.id === item.assetId) && item.defect_code && item.dealer_id && item.claimDate ? [{ id: item.id, body: { defect_code: item.defect_code, dealer_id: item.dealer_id, claim_date: item.claimDate, repair_cost_inr: item.amount } }] : []))
   const requests = useMemo(() => JSON.parse(fingerprint), [fingerprint])
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false, index = 0
     const controllers = new Set()
-    // Two requests at a time keep large local queues from flooding the API.
-    let index = 0
     async function worker() {
       while (!cancelled && index < requests.length) {
-        const request = requests[index++]
-        const key = JSON.stringify(request.body)
-        const controller = new AbortController()
+        const request = requests[index++], key = JSON.stringify(request.body), controller = new AbortController()
         controllers.add(controller)
-        const timeout = setTimeout(() => controller.abort(), 15000)
+        const timer = setTimeout(() => controller.abort(), 15000)
         try {
-          const cached = cache.current.get(key)
-          if (cached) {
-            await Promise.resolve()
-            if (!cancelled) setResponses((previous) => ({ ...previous, [request.id]: { key, data: cached } }))
-            continue
-          }
-          const response = await fetch('/api/assess-warranty', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: key, signal: controller.signal })
-          const result = await response.json()
-          if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Assessment inputs were rejected.')
-          if (!Number.isFinite(result.predicted_service_cost) || !['review', 'within_estimate'].includes(result.triage)) throw new Error('Assessment response was invalid.')
+          const result = cache.current.get(key) || await api('/screen-claim', { method: 'POST', body: key, signal: controller.signal })
+          if (!Number.isFinite(result.model_score) || result.model_score < 0 || result.model_score > 1) throw new Error('The model returned an invalid score.')
           if (!cancelled) { cache.current.set(key, result); setResponses((previous) => ({ ...previous, [request.id]: { key, data: result } })) }
-        } catch (failure) {
-          if (!cancelled) setResponses((previous) => ({ ...previous, [request.id]: { key, error: failure.name === 'AbortError' ? 'Estimate timed out. Retry the model check.' : failure instanceof TypeError || failure instanceof SyntaxError ? 'Model check unavailable. Start the backend or retry. Policy checks still run locally.' : failure.message } }))
-        } finally { clearTimeout(timeout); controllers.delete(controller) }
+        } catch (error) {
+          if (!cancelled) setResponses((previous) => ({ ...previous, [request.id]: { key, error: controller.signal.aborted ? 'Model check timed out. Retry model checks.' : error.message } }))
+        } finally { clearTimeout(timer); controllers.delete(controller) }
       }
     }
     worker(); worker()
-    return () => { cancelled = true; controllers.forEach((c) => c.abort()) }
+    return () => { cancelled = true; controllers.forEach((controller) => controller.abort()) }
   }, [requests, attempt])
-  const assessments = Object.fromEntries(requests.map((request) => {
-    const response = responses[request.id]
-    return [request.id, response?.key === JSON.stringify(request.body) ? response : { loading: true }]
-  }))
-  return { assessments, retry: () => { cache.current.clear(); setResponses({}); setAttempt((n) => n + 1) } }
+  const assessments = Object.fromEntries(requests.map((request) => { const response = responses[request.id]; return [request.id, response?.key === JSON.stringify(request.body) ? response : { loading: true }] }))
+  return { assessments, retry: () => { cache.current.clear(); setResponses({}); setAttempt((value) => value + 1) } }
 }

@@ -19,7 +19,7 @@ export function screenWarranty(item, assets, cases = []) {
     { name: 'Mileage limit', ok: Number.isFinite(item.mileage) && item.mileage >= 0 && item.mileage <= asset.policy.maxMileage, detail: `Claim mileage ${item.mileage ?? 'missing'} km; limit ${asset.policy.maxMileage} km.` },
     { name: 'Component coverage', ok: asset.policy.components.includes(item.claimKey), detail: `${componentLabel(item.claimKey || item.claim)} ${asset.policy.components.includes(item.claimKey) ? 'is listed' : 'is not listed'} in the entered policy.` },
     { name: 'Per-claim limit', ok: item.amount <= asset.policy.claimLimit, detail: `Requested ₹${item.amount}; entered limit ₹${asset.policy.claimLimit}.` },
-    { name: 'Duplicate submission', ok: !duplicate, detail: duplicate ? 'Another case matches vehicle, component, date, and amount. Verify invoices.' : 'No matching submission in this browser.' },
+    { name: 'Duplicate submission', ok: !duplicate, detail: duplicate ? 'Another case matches vehicle, component, date, and amount. Verify invoices.' : 'No matching submission in your account.' },
   ]
   return { state: checks.every((c) => c.ok) ? 'Ready for review' : 'Needs attention', checks, asset }
 }

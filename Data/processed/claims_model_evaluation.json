@@ -1,0 +1,88 @@
+{
+  "dataset": "warranty_claims.csv",
+  "sha256": "bb010a2333a6f0837a431a548d61687af9f59af417e38a00cb79523029a10231",
+  "rows": 500,
+  "flagged": 13,
+  "fraud_rate": 0.026,
+  "features": [
+    "defect_code",
+    "dealer_id",
+    "repair_cost_inr",
+    "claim_month"
+  ],
+  "excluded_features": {
+    "claim_id": "Identifier",
+    "vin_masked": "Identifier, used only to group evaluation splits",
+    "approved": "Decision outcome; may leak outcomes",
+    "fraud_flag": "Target label"
+  },
+  "selected_model": "random_forest",
+  "candidates": {
+    "logistic_regression": {
+      "cv_average_precision": 0.02134599164302765,
+      "cv_fold_average_precision": [
+        0.02262918746142907,
+        0.02390667503661854,
+        0.01750211243103534
+      ]
+    },
+    "random_forest": {
+      "cv_average_precision": 0.026638444599351035,
+      "cv_fold_average_precision": [
+        0.028458520646020648,
+        0.034728216933174384,
+        0.01672859621885807
+      ]
+    }
+  },
+  "holdout": {
+    "average_precision": 0.03367185249207721,
+    "roc_auc": 0.36426116838487976,
+    "brier_score": 0.02954607630306932,
+    "precision_at_0_5": 0.0,
+    "recall_at_0_5": 0.0,
+    "confusion_matrix": [
+      [
+        97,
+        0
+      ],
+      [
+        3,
+        0
+      ]
+    ]
+  },
+  "baseline_holdout": {
+    "average_precision": 0.03,
+    "roc_auc": 0.5,
+    "brier_score": 0.029124999999999988,
+    "precision_at_0_5": 0.0,
+    "recall_at_0_5": 0.0,
+    "confusion_matrix": [
+      [
+        97,
+        0
+      ],
+      [
+        3,
+        0
+      ]
+    ]
+  },
+  "beats_baseline": false,
+  "training_rows": 400,
+  "holdout_rows": 100,
+  "training_flagged": 10,
+  "holdout_flagged": 3,
+  "method": "3-fold stratified grouped CV on training data selects highest average precision; separate approximately 20% grouped holdout; masked VINs never cross partitions. Final experimental artifact refit on all 500 rows.",
+  "seed": 73,
+  "status": "experimental_only",
+  "limitations": [
+    "Only 13 fraud-positive records; metrics have high uncertainty.",
+    "Dataset provenance and label verification were not provided.",
+    "Random grouped evaluation does not establish future performance.",
+    "Scores are not calibrated fraud probabilities; manual review is always required.",
+    "Historical approval is descriptive only; no approval prediction is trained.",
+    "Legacy maintenance, credit, auction and appliance datasets have no validated join key or compatible fraud target and are excluded."
+  ]
+}

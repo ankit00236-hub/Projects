@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "pip install -r requirements.txt && python -m ml.train_claims_model && npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "{Data/warranty_claims.csv,Data/processed/claims_fraud_model.joblib,Data/processed/claims_model_evaluation.json,src/data/vehicleOptions.json}",
+      "excludeFiles": "{node_modules/**,.venv/**,tests/**,backend/tests/**,ml/notebooks/**,dist/**,public/**}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    }
+  ]
+}

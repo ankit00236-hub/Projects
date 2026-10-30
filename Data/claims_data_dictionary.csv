@@ -1,0 +1,9 @@
+column_name,data_type,sample_value_1,sample_value_2,sample_value_3,nullable,description_fill_in
+claim_id,object/numeric,CLM00001,CLM00002,CLM00003,No,claim_id — [Learner to fill in description]
+vin_masked,object/numeric,XXXX89901,XXXX25436,XXXX39789,No,vin_masked — [Learner to fill in description]
+claim_date,object/numeric,2024-11-17,2024-08-24,2024-09-29,No,claim_date — [Learner to fill in description]
+defect_code,object/numeric,Electrical_Short,Brake_Pad,Battery_Failure,No,defect_code — [Learner to fill in description]
+repair_cost_inr,object/numeric,44657.0,498566.0,132297.0,No,repair_cost_inr — [Learner to fill in description]
+approved,object/numeric,Y,N,N,No,approved — [Learner to fill in description]
+fraud_flag,object/numeric,0,0,0,No,fraud_flag — [Learner to fill in description]
+dealer_id,object/numeric,DLR02,DLR01,DLR02,No,dealer_id — [Learner to fill in description]

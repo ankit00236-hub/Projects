@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.vercel/
 dist
 dist-ssr
 *.local
@@ -55,8 +56,6 @@ service-account*.json
 Data/*
 !Data/processed/
 Data/processed/*
-!Data/processed/service_model_evaluation.json
-!Data/processed/risk_data_audit.json
 *.csv
 *.pkl
 *.pickle
@@ -75,3 +74,9 @@ Data/processed/*
 
 # Local scratch directory; application source is in this repository root
 /Plutus/
+.vercel
+
+# Active supplied warranty dataset and reproducible evaluation
+!Data/warranty_claims.csv
+!Data/claims_data_dictionary.csv
+!Data/processed/claims_model_evaluation.json
