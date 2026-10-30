@@ -51,7 +51,7 @@ Three stratified grouped folds within 400 training rows select a candidate by av
 
 The final experimental artifact is refit on all 500 rows. Scores for those historical rows are in-sample; holdout metrics belong to the separate evaluation model. There are only 13 positive examples and dataset provenance has not been verified. Scores are uncalibrated and unsuitable for automated claim decisions. Every case requires human review; the app displays this limitation and warns about dates or costs outside the observed range. Better fraud performance needs additional verified labels and independent future-period validation.
 
-Reproduce the model and report with `python -m ml.train_claims_model`. Restart the backend after regeneration. Outputs are `Data/processed/claims_fraud_model.joblib` and `claims_model_evaluation.json`. The CSV and evaluation are committed; the trained binary is generated. Old service-cost routes and obsolete data summaries are not used by the integrated application.
+Reproduce the model and report with `python -m ml.train_claims_model`. Restart the backend after regeneration. Outputs are `Data/processed/claims_fraud_model.joblib`, `claims_fraud_model.json` and `claims_model_evaluation.json`. The deployed scorer uses compact JSON parameters and the Python standard library; training-only NumPy, pandas and scikit-learn are excluded from runtime dependencies. Export parity is verified against the trained pipeline for all 500 records. The CSV and evaluation are committed; the trained binary is generated. Old service-cost routes and obsolete data summaries are not used by the integrated application.
 
 ## Checks
 
@@ -85,7 +85,7 @@ It verifies registration, loan/policy/vehicle creation, portfolio-to-warranty li
 
 ## Deployment
 
-`api/index.py` mounts the complete backend under `/api`. Vercel regenerates the model during the build and packages the new CSV, model, report and vehicle validation options. Existing production account/database configuration is preserved. These changes do not deploy the application.
+`api/index.py` mounts the complete backend under `/api`. Vercel uses `uv run --no-project --with-requirements ml/requirements.txt` to regenerate the model in an isolated build environment, then packages the new CSV, model, report and vehicle validation options. Existing production account/database configuration is preserved. These changes do not deploy the application.
 
 ## Demo scenarios
 

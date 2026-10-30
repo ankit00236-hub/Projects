@@ -18,5 +18,5 @@ ml/notebooks
 Data/**
 !Data/warranty_claims.csv
 !Data/processed
-!Data/processed/claims_fraud_model.joblib
+!Data/processed/claims_fraud_model.json
 !Data/processed/claims_model_evaluation.json

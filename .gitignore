@@ -80,3 +80,6 @@ Data/processed/*
 !Data/warranty_claims.csv
 !Data/claims_data_dictionary.csv
 !Data/processed/claims_model_evaluation.json
+
+# Runtime model parameters are regenerated during the build
+Data/processed/claims_fraud_model.json

@@ -34,6 +34,22 @@ def metrics(y, score):
     prediction = score >= .5
     return {"average_precision": float(average_precision_score(y, score)), "roc_auc": float(roc_auc_score(y, score)), "brier_score": float(brier_score_loss(y, score)), "precision_at_0_5": float(precision_score(y, prediction, zero_division=0)), "recall_at_0_5": float(recall_score(y, prediction, zero_division=0)), "confusion_matrix": confusion_matrix(y, prediction, labels=[0, 1]).tolist()}
 
+def export_runtime(pipeline, destination):
+    preprocessing, estimator = pipeline.steps[0][1], pipeline.steps[1][1]
+    encoder, scaler = preprocessing.named_transformers_['categories'], preprocessing.named_transformers_['numeric']
+    payload = {'format': 1, 'categories': [[field, categories.tolist()] for field, categories in zip(['defect_code', 'dealer_id'], encoder.categories_)], 'numeric': [[field, float(mean), float(scale)] for field, mean, scale in zip(['repair_cost_inr', 'claim_month'], scaler.mean_, scaler.scale_)]}
+    if isinstance(estimator, RandomForestClassifier):
+        payload['kind'] = 'forest'
+        payload['trees'] = []
+        for fitted in estimator.estimators_:
+            tree = fitted.tree_
+            values = tree.value[:, 0, :]
+            payload['trees'].append({'left': tree.children_left.tolist(), 'right': tree.children_right.tolist(), 'feature': tree.feature.tolist(), 'threshold': tree.threshold.tolist(), 'positive': (values[:, 1] / values.sum(axis=1)).tolist()})
+    else:
+        payload.update(kind='logistic', intercept=float(estimator.intercept_[0]), coefficients=estimator.coef_[0].tolist())
+    destination.write_text(json.dumps(payload, separators=(',', ':'), allow_nan=False) + '\n')
+
+
 def main():
     path = ROOT / "Data/warranty_claims.csv"
     data = load_data(path)
@@ -58,6 +74,10 @@ def main():
     output = ROOT / "Data/processed"
     output.mkdir(exist_ok=True)
     joblib.dump(final, output / "claims_fraud_model.joblib", compress=3)
+    export_runtime(final, output / "claims_fraud_model.json")
+    from backend.claim_model import ClaimModel
+    exported = ClaimModel(output / "claims_fraud_model.json")
+    np.testing.assert_allclose(np.array(exported.predict_proba(X.to_dict(orient="records"))), final.predict_proba(X), atol=1e-12, rtol=1e-12)
     report = {"dataset": "warranty_claims.csv", "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "rows": len(data), "flagged": int(y.sum()), "fraud_rate": float(y.mean()), "features": FEATURES, "excluded_features": {"claim_id": "Identifier", "vin_masked": "Identifier, used only to group evaluation splits", "approved": "Decision outcome; may leak outcomes", "fraud_flag": "Target label"}, "selected_model": selected, "candidates": results, "holdout": holdout_metrics, "baseline_holdout": baseline, "beats_baseline": holdout_metrics["average_precision"] > baseline["average_precision"] and holdout_metrics["brier_score"] < baseline["brier_score"], "training_rows": len(train), "holdout_rows": len(holdout), "training_flagged": int(y.iloc[train].sum()), "holdout_flagged": int(y.iloc[holdout].sum()), "method": "3-fold stratified grouped CV on training data selects highest average precision; separate approximately 20% grouped holdout; masked VINs never cross partitions. Final experimental artifact refit on all 500 rows.", "seed": 73, "status": "experimental_only", "limitations": ["Only 13 fraud-positive records; metrics have high uncertainty.", "Dataset provenance and label verification were not provided.", "Random grouped evaluation does not establish future performance.", "Scores are not calibrated fraud probabilities; manual review is always required.", "Historical approval is descriptive only; no approval prediction is trained.", "Legacy maintenance, credit, auction and appliance datasets have no validated join key or compatible fraud target and are excluded."]}
     (output / "claims_model_evaluation.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

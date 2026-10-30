@@ -4,6 +4,8 @@ import json
 import unittest
 from pathlib import Path
 import joblib
+import numpy as np
+from backend.claim_model import ClaimModel
 from sklearn.model_selection import StratifiedGroupKFold
 from ml.train_claims_model import FEATURES, load_data
 
@@ -21,6 +23,17 @@ class ClaimTrainingTests(unittest.TestCase):
         self.assertEqual(model.feature_names_in_.tolist(), FEATURES)
         self.assertTrue(set(FEATURES).isdisjoint({'claim_id', 'approved', 'fraud_flag', 'vin_masked'}))
         self.assertEqual(model.predict_proba(data[FEATURES].head()).shape, (5, 2))
+
+    def test_small_runtime_matches_pipeline_on_source_and_new_claims(self):
+        frame = load_data(ROOT / 'Data/warranty_claims.csv')[FEATURES]
+        new = frame.iloc[:10].copy()
+        new['repair_cost_inr'] = [0.01, 1, 1000, 9999, 100000, 499465, 500000, 1000000, 1000000000, 261973]
+        new['claim_month'] = [1, 12, 6, 7, 8, 3, 4, 11, 2, 10]
+        import pandas as pd
+        samples = pd.concat([frame, new], ignore_index=True)
+        pipeline = joblib.load(ROOT / 'Data/processed/claims_fraud_model.joblib')
+        scorer = ClaimModel(ROOT / 'Data/processed/claims_fraud_model.json')
+        np.testing.assert_allclose(scorer.predict_proba(samples.to_dict(orient='records')), pipeline.predict_proba(samples), atol=1e-12, rtol=1e-12)
 
     def test_no_masked_vin_leaks_across_evaluation_partitions(self):
         data = load_data(ROOT / 'Data/warranty_claims.csv')
